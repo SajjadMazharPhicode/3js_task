@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="button-group">
+        <button id="clear">clear all</button>
+        <button id="removeList">stop</button>
+        <h4 style="position:absolute; color:black; margin-left: 50%;">Surface Area: </h4><br><br>
+        <p style="position:absolute; color:black;" id="distancePlace">0<span>m<sup>2</sup></span></p>
+    </div>
+    <div class="screen"></div>
+    <script type="module">
+        import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
+        import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
+        import { PLYLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/PLYLoader";
+
+        // creating a scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true
+        });
+        const canvas = renderer.domElement
+        // canvas.setAttribute('id', 'canvas')
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.querySelector('.screen').appendChild(canvas);
+
+        var area = 0;
+
+        // adding light
+        scene.background = new THREE.Color(0xdddddd)
+        let hlight = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(hlight);
+        var light = new THREE.DirectionalLight(0xffffff, 0.5);
+        light.position.setScalar(10);
+        let directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(0, 1, 0);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        // light = new THREE.PointLight(0xc4c4c4,10);
+        // light.position.set(0,300,500);
+        // scene.add(light);
+        // let light2 = new THREE.PointLight(0xc4c4c4,10);
+        // light2.position.set(500,100,0);
+        // scene.add(light2);
+        // let light3 = new THREE.PointLight(0xc4c4c4,10);
+        // light3.position.set(0,100,-500);
+        // scene.add(light3);
+        // let light4 = new THREE.PointLight(0xc4c4c4,10);
+        // light4.position.set(-500,300,500);
+        // scene.add(light4);
+
+        // creating a box geometry and material and add it to the scene
+        // const geometry = new THREE.BoxGeometry( 1, 1, 1 );
+        // const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+        // const cube = new THREE.Mesh( geometry, material );
+        //scene.add( cube );
+
+        //Attempt for area calculation
+        // console.log('Geometry: ', geometry);
+        // var _len = cube.geometry.faces.length,
+        // _area = 0.0;
+
+        // // if (!_len) return 0.0;
+
+        // for (var i = 0; i < _len; i++) {
+        //     var va = object.geometry.vertices[object.geometry.faces[i].a];
+        //     var vb = object.geometry.vertices[object.geometry.faces[i].b];
+        //     var vc = object.geometry.vertices[object.geometry.faces[i].c];
+
+        //     var ab = vb.clone().sub(va);
+        //     var ac = vc.clone().sub(va);
+
+        //     var cross = new THREE.Vector3();
+        //     cross.crossVectors( ab, ac );
+
+        //     _area += cross.lengthSq() / 2;
+        // }
+
+        // console.log('Area: ', _area);
+
+        camera.position.z = 5;
+
+        var controls = new OrbitControls(camera, canvas);
+
+        // const points = [];
+        // points.push( new THREE.Vector3( - 10, 0, 0 ));
+        // points.push( new THREE.Vector3( 0, 10, 0 ) );
+        // points.push( new THREE.Vector3( 10, 0, 0 ) );
+        // const lineGeometry = new THREE.BufferGeometry().setFromPoints( points );
+        // const line = new THREE.Line( geometry, material );
+        // scene.add( line );
+
+        import { GLTFLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader"
+
+        const loader = new GLTFLoader();
+        renderer.shadowMap.enabled = true
+        renderer.gammaOutput = true
+
+
+
+        var vA = new THREE.Vector3();
+        var vB = new THREE.Vector3();
+        var vC = new THREE.Vector3();
+        var t = new THREE.Triangle();
+
+
+        loader.load('./low_poly_simple_shapes_pack_v1.glb', function (gltf) {
+            var object = new THREE.Mesh(gltf)
+
+            console.log(gltf.scene);
+
+            gltf.scene.traverse(function (object) {
+                // console.log(object);
+                if (object.isMesh) console.log('Area: ', computeArea(object));
+
+            });
+
+            scene.add(gltf.scene);
+
+        }, undefined, function (error) {
+
+            console.error(error);
+
+        });
+        //Compute area starts  =========================================================================================================
+
+        // function computeArea(mesh) {
+
+        //     var geometry = mesh.geometry;
+        //     var index = geometry.index;
+        //     var position = geometry.attributes.position;
+
+        //     var area = 0;
+
+        //     if (index) {
+
+        //         for (var i = 0; i < index.count; i += 3) {
+
+        //             var a = index.getX(i + 0);
+        //             var b = index.getX(i + 1);
+        //             var c = index.getX(i + 2);
+
+        //             vA.fromBufferAttribute(position, a);
+        //             vB.fromBufferAttribute(position, b);
+        //             vC.fromBufferAttribute(position, c);
+
+        //             area += computeTriangleArea(vA, vB, vC);
+
+        //         }
+
+        //     } else {
+
+        //         for (var i = 0; i < position.count; i += 3) {
+
+        //             vA.fromBufferAttribute(position, i + 0);
+        //             vB.fromBufferAttribute(position, i + 1);
+        //             vC.fromBufferAttribute(position, i + 2);
+
+        //             area += computeTriangleArea(vA, vB, vC);
+
+        //         }
+
+        //     }
+
+        //     return area;
+
+        // }
+
+        // function computeTriangleArea(a, b, c) {
+
+        //     return t.set(a, b, c).getArea();
+
+        // }
+
+        //Compute area ends========================================================================================
+        let mouse = new THREE.Vector2()
+        let tmpSphere = null
+        document.querySelector('.screen').addEventListener('pointermove', (event) => {
+            if(tmpSphere){
+                scene.remove(tmpSphere)
+            }
+            let rect = event.target.getBoundingClientRect();
+            let dx = event.clientX - rect.x;
+            let dy = event.clientY - rect.y;
+            mouse.x = (dx / rect.width) * 2 - 1;
+            mouse.y = -((dy / rect.height) * 2 - 1);
+            raycaster.setFromCamera(mouse, camera);
+            
+            let intersects = raycaster.intersectObjects(scene.children, true);
+
+            let intersected = intersects.length > 0 ? intersects[0] : null;
+            if ((intersected != null )) {
+               
+                const geometry = new THREE.SphereGeometry(0.05, 64, 64);
+                const material = new THREE.MeshBasicMaterial({ color: 0x000000, aoMapIntensity: 0.1 });
+                tmpSphere = new THREE.Mesh(geometry, material);
+                tmpSphere.position.set(intersected.point.x, intersected.point.y, intersected.point.z)
+                scene.add(tmpSphere);
+            }
+        }
+        )
+        document.querySelector('.screen').addEventListener("contextmenu", onDocumentMouseDown);
+        // document.addEventListener("pointermove", onDocumentMouseOver, false);
+        // let INTERSECTED;
+        //Hover mesh===================================
+        // function onDocumentMouseOver(event) {
+        //     var intersects = getIntersections(event);
+        //     var meshArea;
+        //     if (intersects.length > 0) {
+
+        //         if (INTERSECTED != intersects[0].object) {
+        //             if (INTERSECTED && INTERSECTED.material.emissive) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+        //             meshArea = computeArea(intersects[0].object);
+        //             console.log("Area of Mesh: ", meshArea);
+        //             if (meshArea != 4) distancePlace.innerText = meshArea.toFixed(2) + 'mtsq';
+
+        //             INTERSECTED = intersects[0].object;
+        //             if (INTERSECTED.material.emissive)
+        //                 INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+        //             console.log(INTERSECTED.material.emissive);
+        //             if (INTERSECTED.material.emissive)
+        //                 INTERSECTED.material.emissive.setHex(0xffff00);
+
+
+        //         }
+
+        //     } else {
+        //         if (INTERSECTED && INTERSECTED.material.emissive) {
+        //             console.log(INTERSECTED.material.color);
+        //             INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+        //         }
+
+        //         INTERSECTED = null;
+
+        //     }
+        // }
+
+
+
+        var points = [
+            // new THREE.Vector3(),
+            // new THREE.Vector3()
+        ]
+        var clicks = -1;
+
+
+        // var markerB = markerA.clone();
+        var markers = [
+            // markerA, markerB
+        ];
+        var lines = []
+        // scene.add(markerA);
+        // scene.add(markerB);
+
+        // var lineGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+        // var lineMaterial = new THREE.LineBasicMaterial({
+        //     color: 0xff5555
+        // });
+        // var line = new THREE.Line(lineGeometry, lineMaterial);
+        // scene.add(line);
+        var raycaster = new THREE.Raycaster();
+        raycaster.params.Points.threshold = 0.01;
+        raycaster.params.Line.threshold = 0.01
+        function getIntersections(event) {
+            var vector = new THREE.Vector2();
+
+            vector.set(
+                event.clientX / window.innerWidth * 2 - 1,
+                -(event.clientY / window.innerHeight) * 2 + 1
+            );
+
+            // var raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(vector, camera);
+
+            var intersects = raycaster.intersectObjects(scene.children);
+
+            return intersects;
+        }
+
+        function setLine(vectorA, vectorB) {
+
+
+            var lineGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+            var lineMaterial = new THREE.LineBasicMaterial({
+                color: 0xff5555
+            });
+            var line = new THREE.Line(lineGeometry, lineMaterial);
+
+            line.geometry.attributes.position.setXYZ(0, vectorA.x, vectorA.y, vectorA.z);
+            line.geometry.attributes.position.setXYZ(1, vectorB.x, vectorB.y, vectorB.z);
+            line.geometry.attributes.position.needsUpdate = true;
+            lines.push(line)
+            scene.add(line)
+        }
+
+        // document.addEventListener('mouseover', rayPointer)
+
+        // function rayPointer(){
+        //     var marker = new THREE.Mesh(
+        //         new THREE.SphereGeometry(0.1, 10, 20),
+        //         new THREE.MeshBasicMaterial({
+        //             color: 0xff5555
+        //         })
+        //     );
+        //     const pointerPosition = getIntersections(event)
+        //     let x = pointerPosition[0].point.x;
+        //     let y =  pointerPosition[0].point.y
+        //     marker.position.copy({x, y})
+        //     scene.add(marker)
+        // }
+
+
+        function createMarkers(point) {
+            // console.log("vector points:", point)
+            var marker = new THREE.Mesh(
+                new THREE.SphereGeometry(0.05, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: markers.length === 0? 0xffff00 : 0xff5555
+                })
+            );
+            const vector3 = new THREE.Vector3(point)
+            vector3.copy(point)
+            marker.position.copy(point)
+            markers.push(marker)
+            points.push(vector3)
+            scene.add(marker)
+
+            setLine(points[points.length - 1], points[points.length - 2])
+            if (points.length > 2) {
+                if (points.length > 3) {
+                    scene.remove(lines[lines.length - 2])
+                }
+                setLine(points[0], points[points.length - 1])
+            }
+            if (points.length > 2) {
+                console.log(getArea())
+                document.querySelector('p').innerHTML = `${getArea()}<span>m<sup>2</sup></span>`
+            }
+
+        }
+
+        function getArea() {
+            let area = 0;
+            let j = points.length - 1;
+            for (let i = 0; i < points.length; i++) {
+                let p1 = points[i];
+                let p2 = points[j];
+                area += (p2.x + p1.x) * (p1.z - p2.z);
+                j = i;
+            }
+
+            return Math.abs(area / 2);
+        }
+
+        function onDocumentMouseDown(event) {
+
+            // clicks++;
+            // //console.log("Clicks: ",clicks)
+            // console.log("Event: ", event)
+            var intersects = getIntersections(event);
+            createMarkers(intersects[0].point)
+            // if(points.length > 1) var distance = points[0].distanceTo(points[1]);
+            // console.log(distance)
+            // console.log("Intersects", intersects)
+            // if (clicks == 0) {
+            //     if (intersects.length > 0) {
+            //         scene.remove(markerB);
+            //         points[clicks].copy(intersects[0].point);
+            //         markers[clicks].position.copy(intersects[0].point);
+            //         setLine(intersects[0].point, intersects[0].point);
+            //         scene.add(markerA);
+            //     } else clicks = -1;
+            // }
+            // if (clicks == 1) {
+            //     if (intersects.length > 0) {
+            //         points[clicks].copy(intersects[0].point);
+            //         markers[clicks].position.copy(intersects[0].point);
+            // var distance = points[0].distanceTo(points[1]);
+            //         scene.add(markerB);
+            //         distancePlace.innerText = distance.toFixed(2) + 'm';
+            //         setLine(points[0], points[1]);
+            //         clicks = -1;
+            //     } else clicks = -1
+
+
+            // }
+            // console.log(clicks)  
+
+
+
+        function clearMarkers() {
+            for (let i = 0; i < markers.length; i++) {
+                console.log(markers, points)
+                markers[i].geometry.dispose();
+                markers[i].material.dispose();
+                // points[i].geometry.dispose();
+                // points[i].material.dispose();
+
+                scene.remove(markers[i]);
+            }
+            for (let i = 0; i < lines.length; i++) {
+                lines[i].geometry.dispose()
+                lines[i].material.dispose()
+                scene.remove(lines[i])
+            }
+            markers = []
+            points = []
+            lines = []
+            document.querySelector('p').innerHTML = `0<span>m<sup>2</sup></span>`
+        }
+        document.querySelector("#clear").addEventListener("click", clearMarkers)
+
+        renderer.setAnimationLoop(function () {
+            if (!resize(renderer)) {
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+            renderer.render(scene, camera);
+        });
+
+        function resize(renderer) {
+            const canvas = renderer.domElement;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const needResize = canvas.width !== width || canvas.height !== height;
+            if (needResize) {
+                renderer.setSize(width, height, false);
+            }
+            return needResize;
+        }
+
+    </script>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #button-group {
+            position: absolute;
+            width: 100%;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 9;
+        }
+
+        #distancePlace {
+            margin-left: 50%;
+        }
+    </style>
+</body>
+
+</html>

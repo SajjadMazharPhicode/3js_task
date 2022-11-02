@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "three": "^0.144.0"
+  },
+  "type": "module",
+  "name": "3js",
+  "version": "1.0.0",
+  "main": "index2.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

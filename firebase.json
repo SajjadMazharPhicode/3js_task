@@ -1,0 +1,10 @@
+{
+  "hosting": {
+    "public": "3js",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}

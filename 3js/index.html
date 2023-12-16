@@ -16,44 +16,50 @@
         import { PLYLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/PLYLoader";
         var scene = new THREE.Scene();
         var camera = new THREE.PerspectiveCamera(60, 1, 1, 1000);
-        camera.position.setScalar(10);
+        camera.position.setScalar(1);
         var renderer = new THREE.WebGLRenderer({
             antialias: true
         });
-        renderer.setClearColor(0x404040);
+        // renderer.setClearColor(0x404040);
         var canvas = renderer.domElement;
         document.body.appendChild(canvas);
 
         var controls = new OrbitControls(camera, canvas);
 
-        var light = new THREE.DirectionalLight(0xffffff, 0.5);
-        light.position.setScalar(10);
-        scene.add(light);
+        // var light = new THREE.DirectionalLight(0xffffff, 0.5);
+        // light.position.setScalar(10);
+        // scene.add(light);
         scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
         var loader = new PLYLoader();
-        
-        loader.load(
-            "https://threejs.org/examples/models/ply/ascii/dolphins.ply",
-            function (geometry) {
-                //geometry.computeVertexNormals();
+        const myplys = ['mesh2.ply', 'pile1.ply', 'pile2.ply']
 
-                var material = new THREE.MeshStandardMaterial({
-                    color: 0x0055ff,
-                    flatShading: true
-                });
-                var mesh = new THREE.Mesh(geometry, material);
+        myplys.forEach((pcd)=>{
+            loader.load(
+                // "https://threejs.org/examples/models/ply/ascii/dolphins.ply",
+                "./"+pcd,
+                function (geometry) {
+                    geometry.computeVertexNormals();
+    
+                    var material = new THREE.PointsMaterial({
+                        // color: 0x0055ff,
+                        size: 0.01
+                        // flatShading: true
+                    });
+                    var mesh = new THREE.Points(geometry, material);
+    
+                    mesh.position.y = -0.1;
+                    mesh.position.z = 0.3;
+                    mesh.rotation.x = -Math.PI / 2;
+                    mesh.scale.multiplyScalar(0.01);
+    
+                    scene.add(mesh);
+                }
+            );
 
-                mesh.position.y = -0.1;
-                mesh.position.z = 0.3;
-                mesh.rotation.x = -Math.PI / 2;
-                mesh.scale.multiplyScalar(0.01);
+        })
 
-                scene.add(mesh);
-            }
-        );
-
-        document.addEventListener("mousedown", onDocumentMouseDown, false);
+        // document.addEventListener("mousedown", onDocumentMouseDown, false);
 
         var points = [
             new THREE.Vector3(),
@@ -71,8 +77,8 @@
         var markers = [
             markerA, markerB
         ];
-        scene.add(markerA);
-        scene.add(markerB);
+        // scene.add(markerA);
+        // scene.add(markerB);
 
         var lineGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
         var lineMaterial = new THREE.LineBasicMaterial({
@@ -154,9 +160,34 @@
         canvas {
             width: 100%;
             height: 100%;
-            display:block;
+            display: block;
         }
     </style>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-analytics.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFr8bxhw5MJGsZK5g4IyFPet2U5ISOT7c",
+            authDomain: "test-37028.firebaseapp.com",
+            databaseURL: "https://test-37028-default-rtdb.firebaseio.com",
+            projectId: "test-37028",
+            storageBucket: "test-37028.appspot.com",
+            messagingSenderId: "1080955911278",
+            appId: "1:1080955911278:web:ab6631d24c28068de77a7f",
+            measurementId: "G-2SGN487GKB"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+    </script>
 </body>
 
 </html>

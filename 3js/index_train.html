@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <!-- <div style="position:absolute; color:white;" id="distancePlace">0</div> -->
+    <div style="display: flex; width: 100vw; height: 100vh">
+      <div
+        style="display: flex; width: 20%; flex-direction: column"
+        id="main_container"
+      >
+      <div id="btns">
+        <button id="freeze">Freeze</button>
+        <button id="unfreeze">Unfreeze</button>
+        <button id="removeunselected">Isolate selections</button>
+        <hr>
+        <p style="text-align: center;">Classes</p>
+      </div>
+      <ul id="names"></ul>
+    </div id="canvas_container">
+      <div id="canvas_element" style="width: 70%; height: 100%"></div>
+      <p id="dist"></p>
+    </div>
+    
+    <script type="module">
+      import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
+      import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 2000);
+      camera.position.setScalar(1);
+      var renderer = new THREE.WebGLRenderer({
+        antialias: true,
+      });
+      // renderer.setClearColor(0x404040);
+      var canvas = renderer.domElement;
+      document.getElementById("canvas_element").appendChild(canvas);
+      
+      var controls = new OrbitControls(camera, canvas);
+      
+      document.getElementById("freeze").addEventListener("click",()=>{
+        controls.enabled = false;
+      })
+      document.getElementById("unfreeze").addEventListener("click",()=>{
+        controls.enabled = true;
+      })
+
+      
+    
+
+      // Create a line
+      const lineGeometry = new THREE.BufferGeometry();
+      const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+      const linePoints = [];
+      linePoints.push(new THREE.Vector3(-5, 0, 0));
+      linePoints.push(new THREE.Vector3(5, 0, 0));
+      lineGeometry.setFromPoints(linePoints);
+      const line = new THREE.Line(lineGeometry, lineMaterial);
+      scene.add(line);
+
+      // Create a cube
+      const cubeGeometry = new THREE.BoxGeometry(2,1,1);
+      const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+      const cubePosition = new THREE.Vector3();
+      const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+      scene.add(cube);
+      cube.position.set(0, 0, 0)
+
+      const cuboidGeometry = new THREE.BoxGeometry(5,1,1);
+      const cuboidMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      const cuboidPosition = new THREE.Vector3();
+      const cuboid = new THREE.Mesh(cuboidGeometry, cuboidMaterial);
+      
+      const rotationAngle = Math.PI / 8; // Adjust the angle as needed
+      cuboid.rotation.set(0, 0, rotationAngle);
+
+      scene.add(cuboid);
+
+      // Set initial cuboid position above the cube
+      cuboid.position.set(0, 2, 0);
+
+      // Set camera position
+      camera.position.z = 10;
+
+      // Create a line between the two cubes
+      const lineBetweenCubes = new THREE.Line(
+        new THREE.BufferGeometry(),
+        new THREE.LineBasicMaterial({ color: 0x0000ff })
+      );
+      scene.add(lineBetweenCubes);
+
+    
+
+      // Enable raycasting for mouse interactions
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      // Flag to check if the cube is currently being dragged
+      let isDragging = false;
+
+      // Event listeners for mouse interactions
+      document.addEventListener('mousedown', onMouseDown);
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+
+      function onMouseDown(event) {
+        event.preventDefault();
+
+        // Update the mouse position
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        // Check for intersections with the cube
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects([cube, cuboid]);
+        console.log(intersects)
+        if (intersects.length > 0) {
+          isDragging = true;
+        }
+      }
+
+      function onMouseMove(event) {
+        event.preventDefault();
+        if (isDragging) {
+          // Update the mouse position
+          mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+          mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+          // Move the cube based on the intersection point
+          raycaster.setFromCamera(mouse, camera);
+          const intersection = raycaster.intersectObject(line);
+          if (intersection.length > 0) {
+            cube.position.copy(intersection[0].point);
+            console.log(intersection)
+          }
+        }
+      }
+
+      function onMouseUp() {
+        isDragging = false;
+      }
+
+      console.log(cube.geometry.attributes)
+      const positionAttribute = cuboid.geometry.attributes.position;
+
+    // Create an array to store the minimum z-coordinate for each point
+    const minZCoordinates = [];
+
+    // Iterate through each vertex and calculate the minimum z-coordinate
+    for (let i = 0; i < positionAttribute.count; i++) {
+        // Get the world position of the vertex
+        const vertex = new THREE.Vector3();
+        vertex.fromBufferAttribute(positionAttribute, i);
+        vertex.applyMatrix4(cuboid.matrixWorld);
+
+        // Store the z-coordinate
+        minZCoordinates.push(vertex);
+    }
+    console.log(minZCoordinates)
+
+      renderer.setAnimationLoop(function () {
+        if (resize(renderer)) {
+          camera.aspect = canvas.clientWidth / canvas.clientHeight;
+          camera.updateProjectionMatrix();
+        }
+        const cubeWorldPosi = cube.getWorldPosition(cubePosition)
+        const cuboidWorldPosi = cuboid.getWorldPosition(cuboidPosition)
+        const semiCuboids = (cube.geometry.parameters.depth + cuboid.geometry.parameters.depth)/2
+        const zMaxTrain = Math.abs(cube.position.z +  cube.geometry.parameters.depth/2)
+        const zMinPlatform = Math.abs(cuboid.position.z - cuboid.geometry.parameters.depth/2)
+        document.getElementById("dist").innerText= zMinPlatform + zMaxTrain
+        // console.log(cuboid)
+        // const minZ = cube.position.z - cube.geometry.parameters.depth / 2;
+
+        // raycaster.setFromCamera(mouse, camera);
+        // const intersection = raycaster.intersectObject(line);
+        // if (intersection.length > 0) {
+        //   if (isDragging) {
+        //     const newPosition = intersection[0].point.clone();
+        //     if (intersects[0].object === cube) {
+        //       cube.position.copy(newPosition);
+        //     } else if (intersects[0].object === cuboid) {
+        //       cuboid.position.copy(newPosition);
+        //     }
+        //   }
+        // }
+            // console.log(cube.geometry)
+    //     const verticesCube1 = cube.geometry.vertices.map(vertex => {
+    //         const vertexWorld = vertex.clone().applyMatrix4(cube.matrixWorld);
+    //         return vertexWorld;
+    //     });
+
+    // // Get the vertices of the adjacent face of cube2
+    //     const verticesCube2 = cuboid.geometry.vertices.map(vertex => {
+    //         const vertexWorld = vertex.clone().applyMatrix4(cuboid.matrixWorld);
+    //         return vertexWorld;
+    //     });
+
+    // // Calculate the distances from every point on the adjacent face of cube1 to cube2
+    //     verticesCube1.forEach(point1 => {
+    //         const distances = verticesCube2.map(point2 => point1.distanceTo(point2));
+    //         console.log("Distances from a point on cube1 to cube2:", distances);
+    //     });
+
+        // cube.getWorldPosition(cubePosition);
+        // cuboid.getWorldPosition(cuboidPosition);
+        // const linePoints = [cubePosition, cuboidPosition];
+        // lineBetweenCubes.geometry.setFromPoints(linePoints);
+
+
+        renderer.render(scene, camera);
+      });
+
+      function resize(renderer) {
+        const canvas = renderer.domElement;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const needResize = canvas.width !== width || canvas.height !== height;
+        if (needResize) {
+          renderer.setSize(width, height, false);
+        }
+        return needResize;
+      }
+    </script>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .listitems:hover{
+        color: red;
+      }
+    </style>
+    </script>
+  </body>
+</html>

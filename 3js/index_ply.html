@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <!-- <div style="position:absolute; color:white;" id="distancePlace">0</div> -->
+    <div style="display: flex; width: 100vw; height: 100vh">
+      <div
+        style="display: flex; width: 20%; flex-direction: column"
+        id="main_container"
+      >
+      <div id="btns">
+        <button id="removeboxes">Remove boxes</button>
+        <button id="resetmesh">Reset</button>
+        <button id="removeunselected">Isolate selections</button>
+        <hr>
+        <p style="text-align: center;">Classes</p>
+      </div>
+      <ul id="names"></ul>
+    </div id="canvas_container">
+      <div id="canvas_element" style="width: 70%; height: 100%"></div>
+      <p id="loader">loading... </p>
+    </div>
+    
+    <script type="module">
+      import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
+      import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
+      import { PLYLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/PLYLoader";
+      var scene = new THREE.Scene();
+      // var lod = new THREE.LOD();
+      var manager = new THREE.LoadingManager();
+      var camera = new THREE.PerspectiveCamera(450, window.innerWidth / window.innerHeight, 0.01, 2000);
+      camera.position.setScalar(1);
+      var renderer = new THREE.WebGLRenderer({
+        antialias: true,
+      });
+      // renderer.setClearColor(0x404040);
+      var canvas = renderer.domElement;
+      document.getElementById("canvas_element").appendChild(canvas);
+      
+      var controls = new OrbitControls(camera, canvas);
+      // scene.add(lod);
+      // console.log(THREE.VertexColors)
+      // var light = new THREE.DirectionalLight(0xffffff, 0.5);
+      // light.position.setScalar(10);
+      // scene.add(light);
+      // scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+      manager.onStart = (url, loaded, total)=>{
+        console.log(loaded)
+          document.getElementById("loader").innerHTML = `loading...`
+      }
+      manager.onLoad =()=>{
+        console.log("Done")
+        document.getElementById("loader").innerHTML = `Done`
+      }
+      manager.onProgress = (url, loaded, total)=>{
+        console.log(loaded/total *100)
+        document.getElementById("loader").innerHTML = `loading... ${(loaded/total*100).toFixed(1)}%`
+      }
+
+      var loader = new PLYLoader(manager);
+      let meshes = [];
+      let img_elms = [];
+      var classes = [];
+      const id = location.search.split("=")[1];
+      var boundingBox;
+      var boundingBoxes = [];
+      let selected = null
+      let lowMesh = new THREE.Object3D();
+      let highMesh = new THREE.Object3D();
+
+      fetchPly()
+
+      function fetchPly(){
+          img_elms=[];
+          classes=[];
+          selected=null;
+          boundingBoxes=[];
+          boundingBox = undefined;
+          fetch("http://localhost:4000/"+id)
+            .then((res) => res.json())
+            .then(({ plys, imgs }) => {
+              rerenderPly(plys, imgs);
+            });
+      }
+
+      function resetMeshes(){
+        meshes.forEach(meshObj=>{
+            if(!meshObj.name.includes(selected))
+            scene.add(meshObj.mesh)
+        })
+      }
+      document.getElementById("resetmesh").addEventListener("click", resetMeshes)
+
+      function rerenderPly(plys, imgs) {
+        img_elms = imgs;
+        plys.forEach((pcd) => {
+          const cls = pcd.split(/\d+/)[0];
+          console.log("cls", cls)
+          if (!classes.includes(cls) && !cls.includes('mesh')) {
+            classes.push(cls);
+          }
+          if(!(cls.includes('low') || cls.includes('high') || cls.includes('med'))){
+            loader.load(
+              "http://localhost:4000/"+id+"/pcds/" + pcd,
+              function (geometry) {
+                geometry.computeVertexNormals();
+                var material = new THREE.PointsMaterial({
+                  // color: 0x0055ff,
+                  vertexColors: 1,
+                  size: 0.001,
+                  // flatShading: true
+                });
+                console.log(THREE.VertexColors)
+                var mesh = new THREE.Points(geometry, material);
+  
+                mesh.position.y = -0.1;
+                mesh.position.z = 0.5;
+                mesh.rotation.x = -Math.PI / 2;
+                mesh.scale.multiplyScalar(0.01);
+                // pcd==='meshh.ply'&&geometry.center()
+                // mesh.geometry.center()
+                meshes.push({ name: pcd, mesh });
+                // if(cls.includes("mesh_high")){
+                //   // mesh.userData.distance = 200
+                //   console.log("high")
+                //   lod.addLevel(mesh, 200)
+                // }else if(cls.includes("mesh_med")){
+                //   // mesh.userData.distance = 100
+                //   console.log("med")
+                //   lod.addLevel(mesh, 100)
+                // }else if(cls.includes("mesh_low")){
+                //   // mesh.userData.distance = 0
+                //   console.log('low')
+                //   lod.addLevel(mesh, 0)
+                // }else{
+                //   // lod.addLevel(mesh)
+                //   scene.add(mesh)
+                // }
+                  scene.add(mesh);
+                }
+            );
+          }
+        });
+        classes.forEach(cls=> {
+            addClassButtons(cls)
+            createEventListeners(cls)
+        })
+      }
+
+      // document.addEventListener("mousedown", onDocumentMouseDown, false);
+
+      function addClassButtons(cls){
+        const btns_cont = document.getElementById('btns')
+        const btn = document.createElement('button')
+        btn.setAttribute('id', cls);
+        btn.innerText = cls
+        btns_cont.appendChild(btn)
+        
+      }
+
+      function createBoundingMaterial(mesh, color = 0xffff00) {
+        return new THREE.BoxHelper(mesh, color);
+      }
+      function showMeshesName(name) {
+        const ul = document.getElementById("names");
+        const li = document.createElement("li");
+        li.setAttribute("class", "listitems")
+        li.style.cursor = 'pointer';
+        li.innerText = name;
+        li.addEventListener("click", handleOnClickList);
+        ul.appendChild(li);
+      }
+      function removeMeshNames() {
+        const ul = document.getElementById("names");
+        ul.innerHTML = "";
+      }
+
+    //   ? removes the renderred images on list clicked
+      function removeImage(){
+        if (document.getElementById("pile_img")){
+                  document
+                  .getElementById("main_container")
+                  .removeChild(document.getElementById("pile_img"));
+                  document
+                  .getElementById("main_container")
+                  .removeChild(document.getElementById("mylabel"));
+        }
+        if(!document.getElementById("pile_img") && document.getElementById("mylabel")){
+          document
+                  .getElementById("main_container")
+                  .removeChild(document.getElementById("mylabel"));
+        }
+      }
+
+      // ? handling click event on list
+      function handleOnClickList(event) {
+        boundingBoxes.forEach(({ boundingBox, name }) => {
+          if (event.target.innerText === name) {
+            removeImage()
+            boundingBox.material.color.set("red");
+            const img = document.createElement("img");
+            const label = document.createElement('span')
+            img.setAttribute("id", "pile_img");
+            label.setAttribute("id", "mylabel");
+            const currImg = img_elms.find(
+              (elm) =>
+                event.target.innerText.includes(elm.split('.')[0])
+            );
+            if (!currImg){
+              label.innerText = 'No Image available'
+              document.getElementById("main_container").appendChild(label);
+              return
+            }
+            img.setAttribute(
+              "src",
+              "http://localhost:4000/"+id+"/imgs/" + currImg
+            );
+            label.innerText = name;
+            document.getElementById("main_container").appendChild(img);
+            document.getElementById("main_container").appendChild(label);
+          } else {
+            boundingBox.material.color.set("yellow");
+          }
+        });
+      }
+
+      function createEventListeners(cls){
+        document.getElementById(cls).addEventListener("click", (e) => {
+        // console.log(renderer.renderLists)
+        // rerenderPly(['pile1.ply', 'pile2.ply'])
+        removeImage();
+        selected = cls
+        if (boundingBox) {
+          boundingBoxes.forEach(({ boundingBox }) => {
+            scene.remove(boundingBox);
+          });
+          boundingBoxes = [];
+        }
+        removeMeshNames();
+        meshes.forEach((meshObj) => {
+          if (meshObj.name.includes(cls)) {
+            boundingBox = createBoundingMaterial(meshObj.mesh);
+            // scene.remove(meshObj.mesh)
+            // meshObj.mesh.material.color.set("")
+            boundingBoxes.push({ name: meshObj.name, boundingBox });
+            showMeshesName(meshObj.name);
+            scene.add(boundingBox);
+          }
+        });
+      });
+      }
+
+      document.getElementById("removeunselected").addEventListener("click", (e)=>{
+        if(!selected) return;
+        meshes.forEach(meshObj=>{
+            if(!meshObj.name.includes(selected)){
+                scene.remove(meshObj.mesh)
+            }
+        })
+      })
+
+      document.getElementById("removeboxes").addEventListener("click", (e) => {
+        if (document.getElementById("pile_img"))
+          document
+            .getElementById("main_container")
+            .removeChild(document.getElementById("pile_img"));
+        removeMeshNames();
+        if (boundingBox || boundingBoxes.length !== 0) {
+          boundingBoxes.forEach(({ boundingBox }) => {
+            scene.remove(boundingBox);
+          });
+          boundingBoxes = [];
+        }
+      });
+
+     
+    
+   
+
+      renderer.setAnimationLoop(function () {
+        if (resize(renderer)) {
+          camera.aspect = canvas.clientWidth / canvas.clientHeight;
+          camera.updateProjectionMatrix();
+        }
+        renderer.render(scene, camera);
+        // lod.update(camera)
+      });
+
+      function resize(renderer) {
+        const canvas = renderer.domElement;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const needResize = canvas.width !== width || canvas.height !== height;
+        if (needResize) {
+          renderer.setSize(width, height, false);
+        }
+        return needResize;
+      }
+    </script>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .listitems:hover{
+        color: red;
+      }
+    </style>
+    </script>
+  </body>
+</html>

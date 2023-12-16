@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <!-- <div style="position:absolute; color:white;" id="distancePlace">0</div> -->
+    <div style="display: flex; width: 100vw; height: 100vh">
+      <div
+        style="display: flex; width: 20%; flex-direction: column"
+        id="main_container"
+      >
+      <div id="btns">
+        <button id="backward">Backward</button>
+        <button id="forward">Forward</button>
+        <button id="run">Run</button>
+        <button id="reset">Reset</button>
+        <input type="range" min="0" max="1500" value="0" step="3" id="range"
+          style="width: 90%;"
+        >
+        <p>point index: <span id="pointindex">0</span></p>
+        <hr>
+        <p style="text-align: center;">Classes</p>
+      </div>
+      <ul id="names"></ul>
+    </div id="canvas_container">
+      <div id="canvas_element" style="width: 70%; height: 100%"></div>
+      <div>
+        <div><span>Current distance</span> <div id="current">loading...</div> </div> 
+        <div><span>Minimum distance</span> <div  id="minimum">loading...</div> </div> 
+        <div style="color: red; display: none;" id="error" >Error getting pointcloud!!</div> 
+      </div>
+    </div>
+    <script defer type="module" src="./script2_train.js"></script>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .listitems:hover{
+        color: red;
+      }
+    </style>
+    </script>
+  </body>
+</html>

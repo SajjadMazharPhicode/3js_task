@@ -184,7 +184,7 @@
         let mouse = new THREE.Vector2()
         let tmpSphere = null
         document.querySelector('.screen').addEventListener('pointermove', (event) => {
-            if(tmpSphere){
+            if (tmpSphere) {
                 scene.remove(tmpSphere)
             }
             let rect = event.target.getBoundingClientRect();
@@ -193,12 +193,12 @@
             mouse.x = (dx / rect.width) * 2 - 1;
             mouse.y = -((dy / rect.height) * 2 - 1);
             raycaster.setFromCamera(mouse, camera);
-            
+
             let intersects = raycaster.intersectObjects(scene.children, true);
 
             let intersected = intersects.length > 0 ? intersects[0] : null;
-            if ((intersected != null )) {
-               
+            if ((intersected != null)) {
+
                 const geometry = new THREE.SphereGeometry(0.05, 64, 64);
                 const material = new THREE.MeshBasicMaterial({ color: 0x000000, aoMapIntensity: 0.1 });
                 tmpSphere = new THREE.Mesh(geometry, material);
@@ -323,7 +323,7 @@
             var marker = new THREE.Mesh(
                 new THREE.SphereGeometry(0.05, 32, 32),
                 new THREE.MeshBasicMaterial({
-                    color: markers.length === 0? 0xffff00 : 0xff5555
+                    color: markers.length === 0 ? 0xffff00 : 0xff5555
                 })
             );
             const vector3 = new THREE.Vector3(point)
@@ -396,46 +396,46 @@
 
 
 
-        function clearMarkers() {
-            for (let i = 0; i < markers.length; i++) {
-                console.log(markers, points)
-                markers[i].geometry.dispose();
-                markers[i].material.dispose();
-                // points[i].geometry.dispose();
-                // points[i].material.dispose();
+            function clearMarkers() {
+                for (let i = 0; i < markers.length; i++) {
+                    console.log(markers, points)
+                    markers[i].geometry.dispose();
+                    markers[i].material.dispose();
+                    // points[i].geometry.dispose();
+                    // points[i].material.dispose();
 
-                scene.remove(markers[i]);
+                    scene.remove(markers[i]);
+                }
+                for (let i = 0; i < lines.length; i++) {
+                    lines[i].geometry.dispose()
+                    lines[i].material.dispose()
+                    scene.remove(lines[i])
+                }
+                markers = []
+                points = []
+                lines = []
+                document.querySelector('p').innerHTML = `0<span>m<sup>2</sup></span>`
             }
-            for (let i = 0; i < lines.length; i++) {
-                lines[i].geometry.dispose()
-                lines[i].material.dispose()
-                scene.remove(lines[i])
-            }
-            markers = []
-            points = []
-            lines = []
-            document.querySelector('p').innerHTML = `0<span>m<sup>2</sup></span>`
-        }
-        document.querySelector("#clear").addEventListener("click", clearMarkers)
+            document.querySelector("#clear").addEventListener("click", clearMarkers)
 
-        renderer.setAnimationLoop(function () {
-            if (!resize(renderer)) {
-                camera.aspect = canvas.clientWidth / canvas.clientHeight;
-                camera.updateProjectionMatrix();
-            }
-            renderer.render(scene, camera);
-        });
+            renderer.setAnimationLoop(function () {
+                if (!resize(renderer)) {
+                    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                    camera.updateProjectionMatrix();
+                }
+                renderer.render(scene, camera);
+            });
 
-        function resize(renderer) {
-            const canvas = renderer.domElement;
-            const width = canvas.clientWidth;
-            const height = canvas.clientHeight;
-            const needResize = canvas.width !== width || canvas.height !== height;
-            if (needResize) {
-                renderer.setSize(width, height, false);
+            function resize(renderer) {
+                const canvas = renderer.domElement;
+                const width = canvas.clientWidth;
+                const height = canvas.clientHeight;
+                const needResize = canvas.width !== width || canvas.height !== height;
+                if (needResize) {
+                    renderer.setSize(width, height, false);
+                }
+                return needResize;
             }
-            return needResize;
-        }
 
     </script>
     <style>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h4 style="position:absolute; color:black; margin-left: 50%;">Length: </h4><br>
+    <p style="position:absolute; color:black;" id="distancePlace">0<span>m</span></p>
+    <script type="module">
+        import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
+        import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
+        import { PLYLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/PLYLoader";
+
+        // creating a scene
+        let scene, camera, renderer, canvas;
+        function init(){
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({
+                antialias: true
+            });
+            canvas = renderer.domElement
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(canvas);
+    
+            var area = 0;
+    
+            // adding light
+            scene.background = new THREE.Color(0xdddddd)
+            let hlight = new THREE.AmbientLight(0x404040, 0.5);
+            scene.add(hlight);
+            var light = new THREE.DirectionalLight(0xffffff, 0.5);
+            light.position.setScalar(10);
+            let directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(0, 1, 0);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+    
+            camera.position.z = 5;
+    
+            var controls = new OrbitControls(camera, canvas);
+
+        }
+        init();
+        import { GLTFLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader"
+
+        const loader = new GLTFLoader();
+        renderer.shadowMap.enabled = true
+        renderer.gammaOutput = true
+
+
+
+        var vA = new THREE.Vector3();
+        var vB = new THREE.Vector3();
+        var vC = new THREE.Vector3();
+        var t = new THREE.Triangle();
+
+
+        // loader.load('./porsche959.glb', function (gltf) {
+        //     var object = new THREE.Mesh(gltf)
+
+        //     console.log(gltf.scene);
+
+        //     gltf.scene.traverse(function (object) {
+        //         // console.log(object);
+        //         if (object.isMesh) console.log('Area: ', computeArea(object));
+
+        //     });
+
+        //     scene.add(gltf.scene);
+
+        // }, undefined, function (error) {
+
+        //     console.error(error);
+
+        // });
+        fetch("/abc.txt").then(x=>{
+            let rows = x.split("\n");
+
+                const vertices = [];
+                const colors = [];
+                const color = new THREE.Color();
+                let max_h = 10;
+
+                // Giving color to points based on the height of z
+                for (let i = 0; i < rows.length - 2; i++) {
+                    // let p = rows[i].split(",");
+                    let p = rows[i].split(" ");
+
+                    vertices.push(1 * p[0], 1 * p[1], 1 * p[2]);
+                    color.setHSL((1 * p[2]) / max_h, 1.0, 0.5);
+                    colors.push(color.r, color.g, color.b);
+                }
+
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+                geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+                // size: 0.2,
+                const material = new THREE.PointsMaterial({ vertexColors: true, size: 0.7 });
+
+                window.points = new THREE.Points(geometry, material);
+
+
+                // Making the uuid "1" to identify as the base pcd
+                window.points.uuid = "1";
+
+                window.selectedSegments.push({
+                    points: window.points,
+                    visible: false,
+                    active: false,
+                });
+
+                setSelectedSegments([...window.selectedSegments]);
+                window.scene.add(window.points);
+                window.selectedIndex = 1;
+                setSelectedIndex(-1);
+                // window.selectSegment(window.selectedSegments.length - 1);
+                window.segmentsData["1"] = {};
+                setSegmentData({ 1: {} });
+                window.renderLayerSection();
+                setFoundPointCloud(true)
+                setLoading(false)
+            }).catch(err => {
+                setFoundPointCloud(false)
+                console.log({ err })
+            });
+        })
+        //Compute area starts  =========================================================================================================
+
+        function computeArea(mesh) {
+
+            var geometry = mesh.geometry;
+            var index = geometry.index;
+            var position = geometry.attributes.position;
+
+            var area = 0;
+
+            if (index) {
+                console.log("indexx")
+                for (var i = 0; i < index.count; i += 3) {
+
+                    var a = index.getX(i + 0);
+                    var b = index.getX(i + 1);
+                    var c = index.getX(i + 2);
+
+                    vA.fromBufferAttribute(position, a);
+                    vB.fromBufferAttribute(position, b);
+                    vC.fromBufferAttribute(position, c);
+
+                    area += computeTriangleArea(vA, vB, vC);
+
+                }
+
+            } else {
+                console.log("position")
+                for (var i = 0; i < position.count; i += 3) {
+
+                    vA.fromBufferAttribute(position, i + 0);
+                    vB.fromBufferAttribute(position, i + 1);
+                    vC.fromBufferAttribute(position, i + 2);
+
+                    area += computeTriangleArea(vA, vB, vC);
+
+                }
+
+            }
+
+            return area;
+
+        }
+
+        function computeTriangleArea(a, b, c) {
+
+            return t.set(a, b, c).getArea();
+
+        }
+
+        //Compute area ends========================================================================================
+
+        document.addEventListener("mousedown", onDocumentMouseDown, false);
+        // document.addEventListener("pointermove", onDocumentMouseOver, false);
+        let INTERSECTED;
+        //Hover mesh===================================
+        function onDocumentMouseOver(event) {
+            var intersects = getIntersections(event);
+            var meshArea;
+            if (intersects.length > 0) {
+
+                if (INTERSECTED != intersects[0].object) {
+                    if (INTERSECTED && INTERSECTED.material.emissive) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+                    meshArea = computeArea(intersects[0].object);
+                    console.log("Area of Mesh: ", meshArea);
+                    if (meshArea != 4) distancePlace.innerText = meshArea.toFixed(2) + 'mtsq';
+
+                    INTERSECTED = intersects[0].object;
+                    if (INTERSECTED.material.emissive)
+                        INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+                    console.log(INTERSECTED.material.emissive);
+                    if (INTERSECTED.material.emissive)
+                        INTERSECTED.material.emissive.setHex(0xffff00);
+
+
+                }
+
+            } else {
+                if (INTERSECTED && INTERSECTED.material.emissive) {
+                    console.log(INTERSECTED.material.color);
+                    INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+                }
+
+                INTERSECTED = null;
+
+            }
+        }
+
+
+
+        var points = [
+            new THREE.Vector3(),
+            new THREE.Vector3()
+        ]
+        var clicks = -1;
+
+        var markerA = new THREE.Mesh(
+            new THREE.SphereGeometry(0.1, 10, 20),
+            new THREE.MeshBasicMaterial({
+                color: 0xff5555
+            })
+        );
+        var markerB = markerA.clone();
+        var markers = [
+            markerA, markerB
+        ];
+        // scene.add(markerA);
+        // scene.add(markerB);
+
+        var lineGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+        var lineMaterial = new THREE.LineBasicMaterial({
+            color: 0xff5555
+        });
+        var line = new THREE.Line(lineGeometry, lineMaterial);
+        scene.add(line);
+
+        function getIntersections(event) {
+            var vector = new THREE.Vector2();
+
+            vector.set(
+                event.clientX / window.innerWidth * 2 - 1,
+                -(event.clientY / window.innerHeight) * 2 + 1
+            );
+
+            var raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(vector, camera);
+
+            var intersects = raycaster.intersectObjects(scene.children);
+
+            return intersects;
+        }
+
+        function setLine(vectorA, vectorB) {
+
+            line.geometry.attributes.position.setXYZ(0, vectorA.x, vectorA.y, vectorA.z);
+            line.geometry.attributes.position.setXYZ(1, vectorB.x, vectorB.y, vectorB.z);
+            line.geometry.attributes.position.needsUpdate = true;
+        }
+
+        function onDocumentMouseDown(event) {
+            clicks++;
+            //console.log("Clicks: ",clicks)
+            console.log("Event: ", event)
+            var intersects = getIntersections(event);
+            console.log("Intersects", intersects)
+            if (clicks == 0) {
+
+                if (intersects.length > 0) {
+                    scene.remove(markerB);
+                    points[clicks].copy(intersects[0].point);
+                    markers[clicks].position.copy(intersects[0].point);
+                    setLine(intersects[0].point, intersects[0].point);
+                    scene.add(markerA);
+                } else clicks = -1;
+            }
+            if (clicks == 1) {
+                if (intersects.length > 0) {
+                    points[clicks].copy(intersects[0].point);
+                    markers[clicks].position.copy(intersects[0].point);
+                    var distance = points[0].distanceTo(points[1]);
+                    scene.add(markerB);
+                    distancePlace.innerText = distance.toFixed(2) + 'm';
+                    setLine(points[0], points[1]);
+                    clicks = -1;
+                } else clicks = -1
+
+
+            }
+            // console.log(clicks)  
+        }
+
+
+
+        renderer.setAnimationLoop(function () {
+            if (resize(renderer)) {
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+            renderer.render(scene, camera);
+        });
+
+        function resize(renderer) {
+            const canvas = renderer.domElement;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const needResize = canvas.width !== width || canvas.height !== height;
+            if (needResize) {
+                renderer.setSize(width, height, false);
+            }
+            return needResize;
+        }
+
+    </script>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #distancePlace {
+            margin-left: 50%;
+        }
+    </style>
+</body>
+
+</html>

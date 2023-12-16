@@ -81,7 +81,7 @@ import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
         const cubeGeometry = new THREE.BoxGeometry(1.7,3,1);
         // const cubeGeometry = new THREE.BoxGeometry(1,1.7,4);
         const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const cubePosition = new THREE.Vector3();
+        // const cubePosition = new THREE.Vector3();
         cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
         // cube.rotation.set(0, 0, Math.PI/8.4);
         setCubePosition(vertices, 0)
@@ -89,6 +89,7 @@ import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
         cube.position.set(vertices[0], vertices[1]-1, vertices[2])
         getDistance(vertices, 0)
       }    
+
       // function setCubePosition(vertices, idx){
       //   cube.position.set(vertices[idx], vertices[idx+1]-0.9, vertices[idx+2])
       //   cube.lookAt(new THREE.Vector3(vertices[idx+(3*10)], vertices[idx+(3*10)+1]-0.9, vertices[(3*10)+2]))
@@ -123,7 +124,7 @@ import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
           })
           document.getElementById('range').addEventListener('input', (e)=>{
             const idx = parseInt(e.target.value)
-            startRunning.runsWith(3)
+            startRunning.setWith(idx)
             console.log(idx)
             setPointIndex()
             setCubePosition(vertices, startRunning.getIndex())
@@ -138,7 +139,7 @@ import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
           })
           document.getElementById('reset').addEventListener('click', ()=>{
             scene.remove(cube);
-            startRunning.getIndex() = 0;
+            startRunning.setWith(0)
             isRunning = false;
             createCuboid();
             setCubePosition(vertices, startRunning.getIndex());
@@ -187,7 +188,8 @@ import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
         return {
             runsWith:function(multiplyer){counter+=3*multiplyer;},
             resetToZero:function(){counter=0},
-            getIndex: function(){return counter}
+            getIndex: function(){return counter},
+            setWith: function(val){counter = val}
         }
       })();
 

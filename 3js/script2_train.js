@@ -1,5 +1,6 @@
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
       import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
+      // import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader.js';
       var scene = new THREE.Scene();
       var camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 200000000);
       camera.position.setScalar(200);
@@ -19,6 +20,7 @@ import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
       light.position.setScalar(1);
       scene.add(light);
       // scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+      // scene.add(new THREE.PointLight())
       
       // Global variables
       const vertices = [];
@@ -58,22 +60,24 @@ import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
         fetch("http://localhost:4000/?id="+id).then(resp=> resp.json())
         .then((d)=>{
           const track = d.track;
-          const plat = d.plat
-          const stat = d.station
-          let rows = track.split("\n");
-          let platRows = plat.split('\n')
-          let statRows = stat.split('\n')
-          initRendering(rows, vertices, trackColors, true)
-          initRendering(platRows, platVertices, platColors, true)
-          initRendering(statRows, statVertices, statColors, true)
+          const plat = d.plat;
+          const stat = d.station;
+          let rows = track.split('\n');
+          let platRows = plat.split('\n');
+          let statRows = stat.split('\n');
+          initRendering(rows, vertices, trackColors, true);
+          initRendering(platRows, platVertices, platColors, true);
+          initRendering(statRows, statVertices, statColors, true);
+          
           // setting the max value in range input 
-          console.log(vertices.length)
-          document.getElementById("range").setAttribute("max", vertices.length-40)
-
-          createCuboid()
-          getDistance(vertices, 0)
+          console.log(vertices.length);
+          document.getElementById("range").setAttribute("max", vertices.length);
+          document.getElementById('max').innerText = vertices.length
+          createCuboid();
+          initializeListeners();
+          getDistance(vertices, 0);
         }).catch(err=>{
-          console.log("error occured: ", err.message)
+          console.log("error occured: ", err.message);
         })
       }
 
@@ -84,27 +88,24 @@ import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
         // const cubePosition = new THREE.Vector3();
         cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
         // cube.rotation.set(0, 0, Math.PI/8.4);
-        setCubePosition(vertices, 0)
+        setCubePosition(vertices, 0);
         scene.add(cube);
-        cube.position.set(vertices[0], vertices[1]-1, vertices[2])
-        getDistance(vertices, 0)
+        cube.position.set(vertices[0], vertices[1]-1, vertices[2]);
+        getDistance(vertices, 0);
       }    
+   
 
-      // function setCubePosition(vertices, idx){
-      //   cube.position.set(vertices[idx], vertices[idx+1]-0.9, vertices[idx+2])
-      //   cube.lookAt(new THREE.Vector3(vertices[idx+(3*10)], vertices[idx+(3*10)+1]-0.9, vertices[(3*10)+2]))
-      // }
 
       function setCubePosition(vertices, idx) {
         cube.position.set(vertices[idx], vertices[idx+1]-0.9, vertices[idx+2]);
         const angle = Math.atan2(vertices[idx+(3)+1]-0.9 - vertices[idx+1]-0.9, vertices[idx+(3)] - vertices[idx]);
         cube.rotation.z = angle+0.25;
       }
+    
       
    
       //? handling events
     //   let counter = 0
-      initializeListeners();
       function initializeListeners(){
           document.getElementById('forward').addEventListener('click', (e)=>{
           if(startRunning.getIndex() >= vertices.length) return
@@ -125,6 +126,7 @@ import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
           document.getElementById('range').addEventListener('input', (e)=>{
             const idx = parseInt(e.target.value)
             startRunning.setWith(idx)
+            e.target.title = idx
             console.log(idx)
             setPointIndex()
             setCubePosition(vertices, startRunning.getIndex())
@@ -132,8 +134,11 @@ import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
           })
           document.getElementById('run').addEventListener('click', ()=>{
             isRunning = isRunning? false:true;
-            if(!isRunning){
+            if(!isRunning){  
               getDistance(vertices, startRunning.getIndex())
+              document.getElementById('run').innerText = 'Run'
+            }else{
+              document.getElementById('run').innerText = 'Stop'
             }
     
           })

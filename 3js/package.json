@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@googlemaps/three": "^4.0.9",
     "three": "^0.144.0"
   },
   "type": "module",

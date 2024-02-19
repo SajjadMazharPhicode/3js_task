@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+    <body></body>
+    <script type="module">
+        import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
+        import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
+        // Create three scenes
+        const scene1 = new THREE.Scene();
+        const scene2 = new THREE.Scene();
+        const scene3 = new THREE.Scene();
+
+        // Create three cameras
+        const camera1 = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        const camera2 = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        const camera3 = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+
+        // Create a WebGL renderer
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Set up the scenes with objects (you can add your 3D models here)
+
+        // Set up scissor for each scene
+        const width = window.innerWidth / 3;
+        const height = window.innerHeight;
+
+        renderer.setScissorTest(true);
+
+        // Scene 1
+        renderer.setScissor(0, 0, width, height);
+        renderer.setViewport(0, 0, width, height);
+        renderer.render(scene1, camera1);
+
+        // Scene 2
+        renderer.setScissor(width, 0, width, height);
+        renderer.setViewport(width, 0, width, height);
+        renderer.render(scene2, camera2);
+
+        // Scene 3
+        renderer.setScissor(2 * width, 0, width, height);
+        renderer.setViewport(2 * width, 0, width, height);
+        renderer.render(scene3, camera3);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update your animations or interactions here
+
+            // Render scenes
+            renderer.clear(); // Clear the canvas
+            renderer.setScissorTest(true);
+
+            // Scene 1
+            renderer.setScissor(0, 0, width, height);
+            renderer.setViewport(0, 0, width, height);
+            renderer.render(scene1, camera1);
+
+            // Scene 2
+            renderer.setScissor(width, 0, width, height);
+            renderer.setViewport(width, 0, width, height);
+            renderer.render(scene2, camera2);
+
+            // Scene 3
+            renderer.setScissor(2 * width, 0, width, height);
+            renderer.setViewport(2 * width, 0, width, height);
+            renderer.render(scene3, camera3);
+        }
+
+        // Start the animation loop
+        animate();
+    </script>
+</html>

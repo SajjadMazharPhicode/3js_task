@@ -96,7 +96,7 @@
 // private variables and functions using class
 // class TestPrivacy{
 //     constructor(str1, str2){
-//         this.#private = str1 
+//         this.#private = str1
 //         this.public = str2
 //     }
 //     #private;
@@ -123,7 +123,7 @@
 //     }
 // }
 
-const fruits = ['mango', 'banana', 'grapes', 'orange', 'guava']
+// const fruits = ["mango", "banana", "grapes", "orange", "guava"];
 // const filterredFruits = fruits.filter(fruit=> fruit.includes("n"))
 // // console.log(filterredFruits)
 // function myFilter(data, condFun){
@@ -155,5 +155,166 @@ const fruits = ['mango', 'banana', 'grapes', 'orange', 'guava']
 //     return temp
 // }
 
+// -----prototyping-----
 // const r = fruits.myFilter(function(elm){return elm.includes('n')})
 // console.log(r)
+// const myObj1 = {
+//     fun2:function(){console.log(this.a)}
+// }
+// const myObj2 = {
+//     a:"hey",
+//     fun:function () {console.log(this.a)}
+// }
+// function myfun(){
+//     this.a = "hey"
+// }
+// myObj1.__proto__ = myObj2
+
+// console.log(myObj1.fun2())
+
+// -------call apply bind-------
+//? The call(), apply() and bind() are the methods of Function instances that calls this function with a given this value and arguments provided individually, as an array and a given sequence of arguments preceding any provided when the new function is called respectively.
+
+// const obj1 = {
+//     fun1:function(x=0){return this.fun2(x)}
+// }
+
+// function outf(){
+//     console.log(this.a)
+// }
+
+// const obj2 = {
+//     fun2:function(x){return this.a+this.b+x},
+//     a:3,
+//     b:5
+// }
+
+// // obj1.__proto__ = obj2
+
+// x = obj1.fun1.apply(obj2, [10])
+// y = obj1.fun1.call(obj2, 5)
+// z = obj1.fun1.bind(obj2)
+
+// console.log(x, y, z(5))
+
+// const obj={
+//     a : 5,
+//     __proto__:{
+//         b:3,
+//         c:function(){return 'pro'},
+//         __proto__:{
+//             d:8,
+//             __proto__:{
+//                 e:function(){return this.a+this.b+this.d}
+//             }
+//         }
+//     }
+// }
+// const arr = [3, 2, 5, 6, 4];
+// console.log(typeof arr)
+// arr.__proto__ = {myfilter:function (checkfilter) {
+//     const fil = []
+//     for (let num of Array.from(this)) {
+//         if (checkfilter(num)) {
+//         fil.push(num)
+//         }
+//     }
+//     return fil
+// }}
+
+// console.log(
+//   arr.myfilter((elm) => {
+//     console.log(elm)
+//     if (elm % 2 === 0) {
+//       return true;
+//     } else {
+//       return false;
+//     }
+//   })
+// );
+
+
+// function mainCallbakc(){
+
+// }
+
+// class A{
+//     constructor(k){
+//         this.name = 'hulululu'
+//         this.k = k
+//     }
+//     getN(){
+//         return this.k + this.name + getM()
+//     }
+// }
+
+// function B(){
+//     this.name1 = 'halalala'
+// }
+// getM = function(key){
+//     return this[key].length
+// }
+
+// const obj = {
+//     n:'123',
+//     fn:function(){return this.k}
+// }
+
+
+// const arr = [3,3,4,4,4,5]
+
+// function getFrequencies(arr){
+//     const result = {};
+//     for(let i=0; i<arr.length;i++){
+//         if(result.hasOwnProperty(`${arr[i]}`)){
+//             result[`${arr[i]}`]+=1
+//         }else{
+//             result[`${arr[i]}`] = 1
+//         }
+//     }
+//     return result
+// }
+
+// function getFreq(arr){
+//     const obj = {}
+//     let count = 1
+//     for(let i=0; i<arr.length; i++){
+//         if(obj.hasOwnProperty(`${arr[i]}`)) continue;
+        
+//         for(let j=i+1; j<arr.length; j++){
+//             if(arr[i] === arr[j]){
+//                 count +=1
+//             }
+//         }
+//         obj[`${arr[i]}`] = count
+//     }
+//     return obj
+// }
+// console.log(getFreq(arr))
+
+// const res = arr.reduce((acc, curr)=>{
+//     if(acc.hasOwnProperty(`${curr}`)){
+//         acc[`${curr}`] += 1;
+//     }else{
+//         acc[`${curr}`] = 1;
+//     }
+//     return acc
+// }, {})
+// console.log(getFrequencies(arr))
+// console.log(res)
+
+// const obj1 = {
+//     a:20,
+//     x:function(){
+//         console.log(this.a)
+//     }
+// }
+
+// function fn(){
+//     console.log(this.a)
+// }
+
+// const obj2 = {
+//     a:30
+// }
+
